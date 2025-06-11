@@ -1,0 +1,17 @@
+{
+  "name": "playwright-cucumber-framework",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "cucumber-js",
+    "e2e": "cucumber-js --require cucumber.conf.ts --require tests/steps/**/*.ts --tags '@SmokeTest'",
+    "debug": "PWDEBUG=1 npm run e2e"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^9.0.0",
+    "dotenv": "^16.0.3",
+    "playwright": "^1.44.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
+}
+
