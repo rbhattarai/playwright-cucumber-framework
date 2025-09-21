@@ -2,16 +2,21 @@
   "name": "playwright-cucumber-framework",
   "version": "1.0.0",
   "scripts": {
-    "test": "cucumber-js",
-    "e2e": "cucumber-js --require cucumber.conf.ts --require tests/steps/**/*.ts --tags '@SmokeTest'",
-    "debug": "PWDEBUG=1 npm run e2e"
+    "test": "cucumber-js tests/features --require-module ts-node/register --require-module tsconfig-paths/register --require tests/steps/**/*.ts --require tests/support/**/*.ts --format json:reports/cucumber.json",
+    "test:headed": "PLAYWRIGHT_HEADLESS=false npm run test"
   },
   "dependencies": {
     "@cucumber/cucumber": "^9.0.0",
-    "dotenv": "^16.0.3",
-    "playwright": "^1.44.0",
+    "@playwright/test": "^1.44.0",
+    "dotenv": "^16.3.1",
+    "playwright": "^1.55.0",
     "ts-node": "^10.9.1",
-    "typescript": "^5.3.3"
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.2.2"
+  },
+  "_moduleAliases": {
+    "@utils": "tests/utils/",
+    "@support": "tests/support/",
+    "@steps": "tests/steps/"
   }
 }
-

@@ -1,29 +1,20 @@
-import { defineConfig } from '@playwright/test';
-import * as dotenv from 'dotenv';
-import fs from 'fs';
+import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
 dotenv.config();
 
-const cert = fs.readFileSync(process.env.CERT_PATH!);
-const key = fs.readFileSync(process.env.CERT_KEY!);
-
 export default defineConfig({
+  testDir: './tests',
+  timeout: 60000,
+  retries: 0,
+  reporter: [['html', { outputFolder: 'reports/html' }]],
   use: {
-    baseURL: process.env.CERT_URL,
-    launchOptions: {
-      headless: false,
-    },
-    contextOptions: {
-      httpCredentials: undefined,
-      ignoreHTTPSErrors: true,
-      extraHTTPHeaders: {},
-      proxy: undefined,
-      permissions: [],
-      viewport: { width: 1280, height: 720 },
-      clientCert: {
-        cert,
-        key,
-      },
-    },
+    headless: false,
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
+    video: 'retain-on-failure',
   },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
+  ]
 });
-

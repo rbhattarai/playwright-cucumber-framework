@@ -1,23 +1,79 @@
-#!/bin/bash
-set -euo pipefail
+#!/usr/bin/env bash
+set -e
 
-ROLE=${1:-admin}
-TAG=${2:-"@SmokeTest"}
+# --- Parse args ---
+ROLE=""
+TAG="@SmokeTest"   # default tag
 
-# Convert .p12 to PEM cert + key
-CERT_FILE="certs/cn=rohan_bhattarai_proj_${ROLE}.p12"
-PASSWORD="changeit"
+for arg in "$@"; do
+  case $arg in
+    -role=*|--role=*)
+      ROLE="${arg#*=}"
+      ;;
+    -tags=*|--tags=*)
+      TAG="${arg#*=}"
+      ;;
+  esac
+done
 
-openssl pkcs12 -in "$CERT_FILE" -clcerts -nokeys -out certs/client-cert.pem -passin pass:$PASSWORD -legacy
-openssl pkcs12 -in "$CERT_FILE" -nocerts -nodes -out certs/client-key.pem -passin pass:$PASSWORD -legacy
+# --- Require ROLE ---
+if [ -z "$ROLE" ]; then
+  echo "❌ ERROR: ROLE is mandatory"
+  echo "👉 Usage: ./run_test.sh -role=admin [-tags=@SmokeTest]"
+  exit 1
+fi
 
-echo "🔐 Certificate extracted. Launching tests for role=$ROLE with tag=$TAG..."
+echo "🔑 Running tests with ROLE=$ROLE TAG=$TAG"
 
-export CERT_PATH=certs/client-cert.pem
-export CERT_KEY=certs/client-key.pem
-export CERT_URL=https://your-app-url.com
+# --- Load variables from .env ---
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo "❌ .env file not found!"
+  exit 1
+fi
 
-echo "Running tests with cert for role=$ROLE"
+# --- Prepare certs ---
+mkdir -p certs
+P12_FILE="certs/${ROLE}.p12"
+CERT_FILE="certs/${ROLE}_cert.pem"
+KEY_FILE="certs/${ROLE}_key.pem"
 
-#npx cucumber-js --require-module ts-node/register --require step-definitions/**/*.ts features/**/*.feature --tags "$TAG"
-npm run e2e
+if [ ! -f "$P12_FILE" ]; then
+  echo "❌ Expected file $P12_FILE not found!"
+  exit 1
+fi
+
+if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+  echo "📜 Converting $P12_FILE into PEM cert and key..."
+  openssl pkcs12 -in "$P12_FILE" -clcerts -nokeys -out "$CERT_FILE" -passin pass:"$P12_PASSWORD"
+  openssl pkcs12 -in "$P12_FILE" -nocerts -nodes -out "$KEY_FILE" -passin pass:"$P12_PASSWORD"
+  echo "✅ Generated $CERT_FILE and $KEY_FILE"
+else
+  echo "ℹ️ Using existing PEM cert and key for ROLE=$ROLE"
+fi
+
+# --- Export for Playwright ---
+export ROLE
+export CERT_PATH="$CERT_FILE"
+export CERT_KEY="$KEY_FILE"
+export CERT_URL="$CERT_URL"
+
+# --- Run Cucumber with Playwright ES Module integration ---
+# npx cucumber-js tests/features \
+#   --import tests/steps/**/*.ts \
+#   --import tests/support/**/*.ts \
+#   --format json:reports/cucumber.json \
+#   --tags "$TAG"
+
+npx cucumber-js tests/features \
+  --require-module ts-node/register \
+  --require-module tsconfig-paths/register \
+  --require tests/steps/**/*.ts \
+  --require tests/support/**/*.ts \
+  --format json:reports/cucumber.json \
+  --tags "$TAG"
+
+# --- Run Cucumber via config ---
+#npx cucumber-js --config cucumber.config.mjs
+
