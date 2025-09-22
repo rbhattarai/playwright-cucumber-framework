@@ -1,5 +1,6 @@
 import { Given, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '@support/world';
+import { TableHelper } from '../utils/TableHelper.ts'
 
 
 Given('I open Google', async function(this: CustomWorld) {
@@ -13,4 +14,5 @@ Then('The title should contain {string}', async function(this: CustomWorld, titl
   if (!pageTitle.includes(title)) {
     throw new Error(`Expected title to include "${title}" but got "${pageTitle}"`);
   }
+  TableHelper.print("Test Table");
 });
