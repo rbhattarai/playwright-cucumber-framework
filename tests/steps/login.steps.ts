@@ -1,6 +1,6 @@
 import { Given, Then } from '@cucumber/cucumber';
 import { CustomWorld } from '@support/world';
-import { TableHelper } from '../utils/TableHelper.ts'
+import { TableHelper } from '@utils/TableHelper';
 
 
 Given('I open Google', async function(this: CustomWorld) {
